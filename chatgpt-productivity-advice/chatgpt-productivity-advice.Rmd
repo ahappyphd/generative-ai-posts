@@ -1,0 +1,149 @@
+---
+title: "ChatGPT's Doctoral Productivity Advice"
+runningheader: "ChatGPT Doctoral Productivity" # only for pdf output
+subtitle: "Computationally-generated parts of the text" # only for html output
+author: "Luis P. Prieto and ChatGPT"
+date: "`r Sys.Date()`"
+output:
+  tufte::tufte_html: default
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+  tufte::tufte_book:
+    citation_package: natbib
+    latex_engine: xelatex
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+library(tufte)
+# invalidate cache when the tufte version changes
+# knitr::opts_chunk$set(cache.extra = packageVersion('tufte'))
+# options(htmltools.dir.version = FALSE)
+
+library(tidyverse)
+library(knitr)
+library(stringr)
+library(openai) # for GPT actions
+library(jsonlite)
+library(gt) # for nice tables
+
+select <- dplyr::select
+
+## Global options
+knitr::opts_chunk$set(cache = FALSE, warning = FALSE, message = FALSE)
+
+
+# Set API key (TODO: add yours!)
+Sys.setenv(
+    OPENAI_API_KEY = ''
+)
+
+
+askChatGPT <- function(prompt, temp=0){
+    
+  # print("Calling GPT...")
+  resp <- create_chat_completion(
+    model = "gpt-3.5-turbo",
+    temperature = temp,
+    messages = list(
+        list(
+            "role" = "system",
+            "content" = "You are a helpful assistant."
+        ),
+        list(
+            "role" = "user",
+            "content" = prompt
+        )
+    )
+  )
+  # print(paste("Got response: ",resp))
+  rsp <- resp$choices$message.content
+
+  rsp
+}
+
+
+```
+
+
+*NB: I have tried to make this code as reproducible as possible (e.g., setting $temperature=0$ -- sadly, seed is not available in the R API I'm using). However, [full reproducibility seems to be impossible](https://cookbook.openai.com/examples/deterministic_outputs_with_the_seed_parameter), so your results WILL vary from what I wrote, probably.*
+
+# A first try
+
+```{r, echo=F}
+
+prompt1 <- paste("Please write a blog post with the most important productivity",
+                 "advice you would give to a doctoral student.\n",
+                 "Please keep the text under 500 words")
+```
+
+Let's see what the "default advice" of ChatGPT would be, what is in the "collective unconscious" of the Web-scale texts that went into the algorithm's training. I will be using temperature zero (i.e., no extra chaos/creativity, reproducible response) and a simple prompt (see margin).
+
+```{marginfigure}
+Please write a blog post with the most important productivity advice you would give to a doctoral student.
+Please keep the text under 500 words.
+```
+
+```{r, results='asis', echo=F}
+
+resp1 <- askChatGPT(prompt1)
+
+cat(resp1)
+
+```
+
+Overall, pretty good, solid advice that I have given one time or another in the blog, and in our doctoral workshops.
+
+(In the blog post, I can include links to the blog posts where I covered these tips).
+
+Still, it felt a bit generic, and the list was a bit long for my taste (albeit it is nice that it already structured it like that), and I would have emphasized certain keywords which were kinda buried in the text (e.g., "progress", see the research by Devos, DeClercq et al.). Probably doctoral students have received this advice multiple times before, but if they are still reading about this topic maybe, for some reason, they haven't managed to adopt some of them.
+
+Thus, as a (PhD student) reader, you can start with these 8 topics, see if you fall short in any of them, read a bit more deeply on it (e.g., the blog posts I link above) and try to implement them better in your daily work. Focus on **one of them at a time**, for a month or so, until you think you have developed good habits/systems around it.
+
+As a writer, this text pushes me to find advice that is *even more* impactful, concrete and original. But, let's give the algorithm the opportunity to push itself
+
+# With some prompt engineering
+
+After a few rounds of trying to make the prompt better (in general, more concrete), I came to this:
+
+```{r, echo=F}
+
+prompt2 <- paste("Please write a short blog post with very concrete and surprising",
+                  "productivity advice for doctoral students.\n",
+                 "Please structure the text around a general but contrarian productivity",
+                 "principle, which is explained in the first part of the text,",
+                 "expanding it later to three concrete pieces of advice based on that principle, each one",
+                 "with a couple of realistic examples of how doctoral students",
+                 "from different disciplines can implement them in their daily lives.\n",
+                 "Write it in the voice of an English-proficient",
+                 "but not bilingual Spanish-speaking academic,",
+                 "making the tone collegial but correct.\n",
+                 "Take some time to think and structure your ideas before providing an answer.\n",
+                 "Please keep the text under 400 words,",
+                 "putting it out in Markdown syntax",
+                 "that highlights the main keywords and ideas.")
+```
+
+```{marginfigure}
+Please write a short blog post with very concrete and surprising productivity advice for doctoral students.
+Please structure the text around a general but contrarian productivity principle, which is explained in the first part of the text, expanding it later to three concrete pieces of advice based on that principle, each one with a couple of realistic examples of how doctoral students from different disciplines can implement them in their daily lives.
+Write it in the voice of an English-proficient but not bilingual Spanish-speaking academic, making the tone collegial but correct.
+Take some time to think and structure your ideas before providing an answer.
+Please keep the text under 400 words, putting it out in Markdown syntax that highlights the main keywords and ideas.
+```
+
+
+```{r, results='asis', echo=F}
+
+resp2 <- askChatGPT(prompt2, temp=0.7)
+
+cat(resp2)
+
+```
+
+Wow, this is much better (even if it still sounds a bit generic, especially the examples). Again, I quite agree with the "contrarian principle" chosen (even citing some of my favorite sources), and have written about it extensively.
+
+Having a higher temperature (i.e., randomness, I used $0.7$) helped a bit with the "genericness", but did not entirely remove this problem. Also, the highlighting that I asked for is not very good (beyond the structure I myself provided). It seems that the algorithm does not know very well which of the words it spits out is really more important than the others (which is to be expected).
+
+Of course, I could continue engineering my prompt again and again, but then I would spend more time on that than I would have spent writing my own blog post. So I will stop here, and try to add an important "missing element" from the algorithm's output.
